@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { Users, UserPlus, Trash2, ShieldCheck, Loader2 } from "lucide-react";
+import { Users, UserPlus, Trash2, ShieldCheck, Loader2, Lock } from "lucide-react";
 
 function AdminPanel() {
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authForm, setAuthForm] = useState({ username: "", password: "" });
+
   const [voters, setVoters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
@@ -15,8 +19,25 @@ function AdminPanel() {
   });
 
   useEffect(() => {
-    fetchVoters();
-  }, []);
+    if (isAuthenticated) {
+      fetchVoters();
+    }
+  }, [isAuthenticated]);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    // Hardcoded credentials for simple frontend protection
+    if (authForm.username === "admin" && authForm.password === "admin123") {
+      setIsAuthenticated(true);
+      toast.success("Welcome, Admin");
+    } else {
+      toast.error("Invalid username or password");
+    }
+  };
+
+  const handleAuthChange = (e) => {
+    setAuthForm({ ...authForm, [e.target.name]: e.target.value });
+  };
 
   async function fetchVoters() {
     try {
@@ -75,16 +96,71 @@ function AdminPanel() {
     }
   };
 
+  // If not authenticated, show login form
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="bg-white p-8 rounded-xl shadow-md border border-gov-border w-full max-w-md">
+          <div className="flex flex-col items-center mb-6">
+            <div className="w-12 h-12 bg-gov-navy text-white rounded-full flex items-center justify-center mb-4 shadow-lg">
+              <Lock className="w-6 h-6" />
+            </div>
+            <h2 className="font-heading text-2xl font-bold text-gov-navy">Admin Access</h2>
+            <p className="text-gray-500 text-sm mt-1">Please enter your credentials to continue</p>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gov-text mb-1">Username</label>
+              <input
+                type="text"
+                name="username"
+                value={authForm.username}
+                onChange={handleAuthChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gov-blue focus:border-transparent outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gov-text mb-1">Password</label>
+              <input
+                type="password"
+                name="password"
+                value={authForm.password}
+                onChange={handleAuthChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gov-blue focus:border-transparent outline-none"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full py-2.5 mt-2 bg-gov-gold text-gov-navy font-bold rounded-lg hover:bg-yellow-500 transition-colors shadow-md"
+            >
+              Login
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="font-heading text-2xl font-bold text-gov-navy flex items-center gap-2">
-          <ShieldCheck className="w-7 h-7 text-gov-gold" />
-          Administrator Panel
-        </h2>
-        <p className="text-gov-text/60 font-body mt-1">
-          Manage authorized voters and system access.
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="font-heading text-2xl font-bold text-gov-navy flex items-center gap-2">
+            <ShieldCheck className="w-7 h-7 text-gov-gold" />
+            Administrator Panel
+          </h2>
+          <p className="text-gov-text/60 font-body mt-1">
+            Manage authorized voters and system access.
+          </p>
+        </div>
+        <button 
+          onClick={() => setIsAuthenticated(false)}
+          className="text-sm px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+        >
+          Logout
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

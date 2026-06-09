@@ -17,7 +17,6 @@ const navItems = [
   { to: "/vote", label: "Cast Vote", icon: Vote },
   { to: "/verifier", label: "Verifier", icon: ShieldCheck },
   { to: "/audit", label: "Audit Log", icon: FileText },
-  { to: "/admin", label: "Admin Panel", icon: Settings },
 ];
 
 function Sidebar() {
