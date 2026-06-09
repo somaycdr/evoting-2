@@ -59,11 +59,8 @@ router.get("/", async (req, res) => {
 // Admin: revoke a voter's authorization
 router.delete("/:address", async (req, res) => {
   try {
-    await Voter.findOneAndUpdate(
-      { walletAddress: req.params.address.toLowerCase() },
-      { isAuthorized: false }
-    );
-    res.json({ success: true, message: "Voter authorization revoked" });
+    await Voter.findOneAndDelete({ walletAddress: req.params.address.toLowerCase() });
+    res.json({ success: true, message: "Voter permanently deleted" });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

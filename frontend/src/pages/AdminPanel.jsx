@@ -81,7 +81,7 @@ function AdminPanel() {
   };
 
   const handleRevoke = async (walletAddress) => {
-    if (!window.confirm(`Are you sure you want to revoke authorization for ${walletAddress}?`)) return;
+    if (!window.confirm(`Are you sure you want to permanently delete the voter ${walletAddress}?`)) return;
 
     try {
       const res = await axios.delete(`/api/voters/${walletAddress}`);
@@ -280,15 +280,13 @@ function AdminPanel() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {v.isAuthorized && (
-                          <button
-                            onClick={() => handleRevoke(v.walletAddress)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition-colors"
-                            title="Revoke Access"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
+                        <button
+                          onClick={() => handleRevoke(v.walletAddress)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition-colors"
+                          title="Delete Voter Permanently"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </td>
                     </tr>
                   ))}
