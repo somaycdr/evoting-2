@@ -12,7 +12,7 @@ function Header() {
           <ShieldCheck className="w-6 h-6 text-gov-blue" />
           <div>
             <h2 className="font-heading text-xl font-bold text-gov-navy">
-              National Student Election 2025
+              YMCA Student election 2026
             </h2>
             <p className="text-xs text-gov-text/60 font-body">
               Decentralized • Transparent • Immutable

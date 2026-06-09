@@ -8,7 +8,7 @@ async function main() {
   console.log(`📋 Deployer Address: ${deployer.address}`);
 
   const EVoting = await hre.ethers.getContractFactory("EVoting");
-  const evoting = await EVoting.deploy("National Student Election 2025");
+  const evoting = await EVoting.deploy("YMCA Student election 2026");
   await evoting.waitForDeployment();
   const contractAddress = await evoting.getAddress();
   console.log(`✅ Deployed at: ${contractAddress}\n`);
