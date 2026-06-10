@@ -45,10 +45,10 @@ router.post("/seed", async (req, res) => {
     const contract = getContract();
     const ids = await contract.getAllCandidateIds();
     const meta = [
-      { age: 42, constituency: "Law",   manifesto: "Digital India, Transparent Governance" },
-      { age: 38, constituency: "Pharmacy", manifesto: "Education First, Build Tomorrow", photoUrl: "https://api.dicebear.com/7.x/personas/svg?seed=Sneha" },
-      { age: 45, constituency: "Management", manifesto: "Jobs, Growth, Prosperity" },
-      { age: 36, constituency: "Technology",    manifesto: "Green Future, Sustainable India" },
+      { age: 42, constituency: "Technology",   manifesto: "Digital India, Transparent Governance" },
+      { age: 38, constituency: "Management", manifesto: "Education First, Build Tomorrow", photoUrl: "https://api.dicebear.com/7.x/personas/svg?seed=Sneha" },
+      { age: 45, constituency: "Law", manifesto: "Jobs, Growth, Prosperity" },
+      { age: 36, constituency: "Pharmacy",    manifesto: "Green Future, Sustainable India" },
     ];
     let seeded = 0;
     for (let i = 0; i < ids.length; i++) {
