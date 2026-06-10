@@ -45,10 +45,10 @@ router.post("/seed", async (req, res) => {
     const contract = getContract();
     const ids = await contract.getAllCandidateIds();
     const meta = [
-      { age: 42, constituency: "Mumbai North",   manifesto: "Digital India, Transparent Governance" },
-      { age: 38, constituency: "Delhi Central",   manifesto: "Education First, Build Tomorrow" },
-      { age: 45, constituency: "Bangalore South", manifesto: "Jobs, Growth, Prosperity" },
-      { age: 36, constituency: "Chennai East",    manifesto: "Green Future, Sustainable India" },
+      { age: 42, constituency: "Law Department",   manifesto: "Digital India, Transparent Governance" },
+      { age: 38, constituency: "Pharmacy Department", manifesto: "Education First, Build Tomorrow", photoUrl: "https://randomuser.me/api/portraits/women/68.jpg" },
+      { age: 45, constituency: "Management", manifesto: "Jobs, Growth, Prosperity" },
+      { age: 36, constituency: "Technology",    manifesto: "Green Future, Sustainable India" },
     ];
     let seeded = 0;
     for (let i = 0; i < ids.length; i++) {
@@ -57,7 +57,7 @@ router.post("/seed", async (req, res) => {
       await Candidate.findOneAndUpdate({ candidateId: id }, {
         candidateId: id, name: chainData[1], party: chainData[2], description: chainData[3],
         ...(meta[i] || {}),
-        photoUrl: `https://api.dicebear.com/7.x/personas/svg?seed=${encodeURIComponent(chainData[1])}`
+        photoUrl: meta[i]?.photoUrl || `https://api.dicebear.com/7.x/personas/svg?seed=${encodeURIComponent(chainData[1])}`
       }, { upsert: true, new: true });
       seeded++;
     }
