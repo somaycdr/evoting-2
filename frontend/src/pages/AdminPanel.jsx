@@ -96,6 +96,21 @@ function AdminPanel() {
     }
   };
 
+  const handleStopElection = async () => {
+    if (!window.confirm("Are you sure you want to STOP the election manually? This action cannot be undone.")) return;
+
+    try {
+      const res = await axios.post("/api/election/stop");
+      if (res.data.success) {
+        toast.success("Election successfully stopped.");
+      } else {
+        toast.error(res.data.error || "Failed to stop election.");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Error stopping election.");
+    }
+  };
+
   // If not authenticated, show login form
   if (!isAuthenticated) {
     return (
@@ -155,12 +170,20 @@ function AdminPanel() {
             Manage authorized voters and system access.
           </p>
         </div>
-        <button 
-          onClick={() => setIsAuthenticated(false)}
-          className="text-sm px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
-        >
-          Logout
-        </button>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={handleStopElection}
+            className="text-sm px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors shadow-md font-medium"
+          >
+            Stop Election
+          </button>
+          <button 
+            onClick={() => setIsAuthenticated(false)}
+            className="text-sm px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

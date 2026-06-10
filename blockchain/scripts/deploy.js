@@ -26,9 +26,9 @@ async function main() {
     console.log(`  ✓ Added: ${c.name}`);
   }
 
-  const startTx = await evoting.startElection(60);
+  const startTx = await evoting.startElection(90);
   await startTx.wait();
-  console.log("\n✅ Election ACTIVE (60 min)");
+  console.log("\n✅ Election ACTIVE (90 min)");
 
   const artifactPath = path.join(__dirname, "../artifacts/contracts/EVoting.sol/EVoting.json");
   const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));

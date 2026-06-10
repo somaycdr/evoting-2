@@ -7,6 +7,7 @@ const morgan   = require("morgan");
 const candidatesRouter = require("./routes/candidates");
 const votesRouter      = require("./routes/votes");
 const votersRouter     = require("./routes/voters");
+const electionRouter   = require("./routes/election");
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -22,6 +23,7 @@ mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/evoting")
 app.use("/api/candidates", candidatesRouter);
 app.use("/api/votes",      votesRouter);
 app.use("/api/voters",     votersRouter);
+app.use("/api/election",   electionRouter);
 
 app.get("/api/health", (req, res) => res.json({
   status: "ok", message: "E-Voting API running", timestamp: new Date().toISOString(),
