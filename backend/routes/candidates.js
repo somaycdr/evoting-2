@@ -45,8 +45,8 @@ router.post("/seed", async (req, res) => {
     const contract = getContract();
     const ids = await contract.getAllCandidateIds();
     const meta = [
-      { age: 42, constituency: "Law Department",   manifesto: "Digital India, Transparent Governance" },
-      { age: 38, constituency: "Pharmacy Department", manifesto: "Education First, Build Tomorrow", photoUrl: "https://randomuser.me/api/portraits/women/68.jpg" },
+      { age: 42, constituency: "Law",   manifesto: "Digital India, Transparent Governance" },
+      { age: 38, constituency: "Pharmacy", manifesto: "Education First, Build Tomorrow", photoUrl: "https://api.dicebear.com/7.x/personas/svg?seed=Sneha" },
       { age: 45, constituency: "Management", manifesto: "Jobs, Growth, Prosperity" },
       { age: 36, constituency: "Technology",    manifesto: "Green Future, Sustainable India" },
     ];
