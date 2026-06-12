@@ -89,6 +89,7 @@ contract EVoting {
     function endElection() external onlyAdmin {
         require(electionActive, "EVoting: Election is not active");
         electionActive = false;
+        electionEndTime = block.timestamp;
         emit ElectionEnded(block.timestamp);
     }
 

@@ -71,6 +71,19 @@ function Dashboard() {
   const totalVotes = candidates.reduce((sum, c) => sum + c.voteCount, 0);
   const maxVotes = Math.max(...candidates.map((c) => c.voteCount), 1);
 
+  // Result calculation when election is stopped
+  let winners = [];
+  let isDeadHeat = false;
+  if (stats && !stats.isActive && candidates.length > 0) {
+    const highestVotes = Math.max(...candidates.map((c) => c.voteCount), 0);
+    if (highestVotes > 0) {
+      winners = candidates.filter((c) => c.voteCount === highestVotes);
+      if (winners.length > 1) {
+        isDeadHeat = true;
+      }
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -113,6 +126,54 @@ function Dashboard() {
           bgColor={stats?.isActive ? "bg-gov-success/10" : "bg-gov-danger/10"}
         />
       </div>
+
+      {/* Election Results Banner */}
+      {stats && !stats.isActive && (
+        <div className="bg-gradient-to-r from-gov-gold/20 to-yellow-100 border-2 border-gov-gold rounded-xl p-8 mb-6 text-center shadow-lg transform transition-all duration-500 hover:scale-[1.01]">
+          <h2 className="text-3xl font-heading font-extrabold text-gov-navy mb-6 drop-shadow-sm">
+            🎉 Final Election Results 🎉
+          </h2>
+          {winners.length === 0 ? (
+            <p className="text-lg text-gov-navy font-medium bg-white/60 py-3 rounded-lg inline-block px-6">
+              No votes were cast in this election.
+            </p>
+          ) : isDeadHeat ? (
+            <div className="animate-fade-in-up">
+              <div className="inline-block bg-red-100 border border-red-200 px-6 py-2 rounded-full mb-6 shadow-sm">
+                <p className="text-xl text-red-600 font-bold uppercase tracking-wider">
+                  Dead Heat! (Tie)
+                </p>
+              </div>
+              <p className="text-lg text-gov-navy mb-6 font-medium">
+                The following candidates have tied with <span className="font-bold text-xl bg-white px-2 py-1 rounded shadow-sm">{winners[0].voteCount}</span> votes each:
+              </p>
+              <div className="flex flex-wrap justify-center gap-6">
+                {winners.map(w => (
+                  <div key={w.id} className="bg-white px-6 py-4 rounded-xl shadow-md border-b-4 border-gov-gold flex flex-col items-center min-w-[200px] transform transition hover:-translate-y-1">
+                    <img src={w.photoUrl} alt={w.name} className="w-16 h-16 rounded-full border-2 border-gray-200 mb-3 object-cover bg-gray-50" />
+                    <p className="font-bold text-xl text-gov-navy">{w.name}</p>
+                    <p className="text-sm font-medium text-gov-blue/80 mt-1">{w.party}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="animate-fade-in-up flex flex-col items-center">
+              <p className="text-xl text-gov-navy mb-4 font-medium">The clear winner is:</p>
+              <div className="bg-white px-10 py-6 rounded-2xl shadow-xl border-b-4 border-green-500 text-center min-w-[300px] transform transition hover:scale-105">
+                <img src={winners[0].photoUrl} alt={winners[0].name} className="w-24 h-24 rounded-full border-4 border-green-100 mx-auto mb-4 object-cover shadow-sm bg-gray-50" />
+                <p className="text-3xl font-extrabold text-green-600 mb-1">{winners[0].name}</p>
+                <p className="text-md font-semibold text-gray-500 mb-4">{winners[0].party}</p>
+                <div className="bg-green-50 rounded-lg py-2 px-4 inline-block border border-green-100">
+                  <p className="font-mono text-2xl text-gov-navy font-bold">
+                    {winners[0].voteCount} <span className="text-lg text-gray-500">Votes</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Results Section */}
       <div className="bg-white rounded-xl border border-gov-border/50 shadow-sm overflow-hidden">
