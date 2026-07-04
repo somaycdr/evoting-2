@@ -13,15 +13,29 @@ function getProvider() {
   return provider;
 }
 
-function getContract() {
+function getSigner() {
+  const privateKey = process.env.ADMIN_PRIVATE_KEY;
+  if (!privateKey) {
+    throw new Error("ADMIN_PRIVATE_KEY not set in .env — needed to send transactions.");
+  }
+  return new ethers.Wallet(privateKey, getProvider());
+}
+
+function getContract(useSigner = false) {
+  const configPath = path.join(__dirname, "../contractConfig.json");
+  if (!fs.existsSync(configPath)) throw new Error("contractConfig.json not found. Run deploy.js first.");
+  const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+
+  if (useSigner) {
+    // Always create a fresh signed instance (no caching – signer is stateless)
+    return new ethers.Contract(config.CONTRACT_ADDRESS, config.ABI, getSigner());
+  }
+
   if (!contract) {
-    const configPath = path.join(__dirname, "../contractConfig.json");
-    if (!fs.existsSync(configPath)) throw new Error("contractConfig.json not found. Run deploy.js first.");
-    const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
     contract = new ethers.Contract(config.CONTRACT_ADDRESS, config.ABI, getProvider());
     console.log(`📄 Contract loaded at: ${config.CONTRACT_ADDRESS}`);
   }
   return contract;
 }
 
-module.exports = { getProvider, getContract };
+module.exports = { getProvider, getSigner, getContract };

@@ -8,14 +8,14 @@ async function main() {
   console.log(`📋 Deployer Address: ${deployer.address}`);
 
   const EVoting = await hre.ethers.getContractFactory("EVoting");
-  const evoting = await EVoting.deploy("YMCA Student election 2026");
+  const evoting = await EVoting.deploy("YMCA Student Election 2026");
   await evoting.waitForDeployment();
   const contractAddress = await evoting.getAddress();
   console.log(`✅ Deployed at: ${contractAddress}\n`);
 
   const candidates = [
     { name: "Arjun Sharma",  party: "Progressive Alliance",  description: "Committed to digital infrastructure and transparent governance." },
-    { name: "Priya Verma",   party: "National Reform Party", description: "Focused on education reforms and rural development." },
+    { name: "Priya Nair",   party: "National Reform Party", description: "Focused on education reforms and rural development." },
     { name: "Rohan Mehta",   party: "United Front",          description: "Advocate for youth empowerment and economic growth." },
     { name: "Kavya Nair",    party: "Green India Party",     description: "Champion of sustainable development and climate action." },
   ];

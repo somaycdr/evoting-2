@@ -66,7 +66,8 @@ router.get("/stats", async (req, res) => {
     const stats = await contract.getElectionStats();
     res.json({ success: true, data: {
       electionName: stats[0], isActive: stats[1], endTime: Number(stats[2]),
-      totalCandidates: Number(stats[3]), totalVotes: Number(stats[4])
+      totalCandidates: Number(stats[3]), totalVotes: Number(stats[4]),
+      electionStopTime: Number(stats[5])
     }});
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });

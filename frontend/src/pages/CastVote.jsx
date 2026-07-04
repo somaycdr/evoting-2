@@ -9,8 +9,8 @@ import {
   Vote,
   CheckCircle2,
   AlertTriangle,
-  ExternalLink,
   Loader2,
+  Ban,
 } from "lucide-react";
 
 function CastVote() {
@@ -21,8 +21,8 @@ function CastVote() {
   const [voting, setVoting] = useState(false);
   const [success, setSuccess] = useState(null);
   const [hasVoted, setHasVoted] = useState(false);
-  const [isAuthorized, setIsAuthorized] = useState(null); // null = checking
-  const [voterName,    setVoterName]    = useState("");
+  const [isAuthorized, setIsAuthorized] = useState(null);
+  const [voterName, setVoterName] = useState("");
 
   useEffect(() => {
     loadCandidates();
@@ -59,7 +59,7 @@ function CastVote() {
     try {
       const res = await axios.get(`/api/voters/check/${account}`);
       if (!res.data.isAuthorized) {
-        setIsAuthorized(false); // voter not registered
+        setIsAuthorized(false);
       } else {
         setIsAuthorized(true);
         setVoterName(res.data.voter?.name || "");
@@ -75,9 +75,14 @@ function CastVote() {
     if (!selectedId) return toast.error("Please select a candidate");
     if (hasVoted) return toast.error("You have already voted");
 
+    // Block vote if the selected candidate is disqualified
+    const selectedCandidate = candidates.find((c) => c.id === selectedId);
+    if (selectedCandidate?.isDisqualified) {
+      return toast.error("This candidate has been disqualified and cannot receive votes.");
+    }
+
     setVoting(true);
     try {
-      // Re-verify network and rebuild signer/contract right before voting
       await ensureHardhatNetwork();
       const freshProvider = new ethers.BrowserProvider(window.ethereum, {
         name: "hardhat",
@@ -92,15 +97,24 @@ function CastVote() {
       const receipt = await tx.wait();
       toast.dismiss("vote");
 
-      const candidate = candidates.find((c) => c.id === selectedId);
+      // Resolve candidate name — first try local list, then chain as fallback
+      let candidate = candidates.find((c) => c.id === selectedId);
+      let resolvedName = candidate?.name || "";
+      if (!resolvedName) {
+        try {
+          const chainCandidate = await freshContract.getCandidate(selectedId);
+          resolvedName = chainCandidate[1] || `Candidate #${selectedId}`;
+        } catch (e) {
+          resolvedName = `Candidate #${selectedId}`;
+        }
+      }
 
-      // Record vote in backend
       try {
         await recordVote({
           txHash: receipt.hash,
           voterAddress: account,
           candidateId: selectedId,
-          candidateName: candidate?.name || "",
+          candidateName: resolvedName,
         });
       } catch (err) {
         console.error("Backend record failed:", err);
@@ -109,10 +123,10 @@ function CastVote() {
       setSuccess({
         txHash: receipt.hash,
         blockNumber: receipt.blockNumber,
-        candidateName: candidate?.name || `Candidate #${selectedId}`,
+        candidateName: resolvedName || `Candidate #${selectedId}`,
       });
       setHasVoted(true);
-      toast.success("Vote cast successfully!");
+      toast.success("Vote cast successfully! Check the Audit Log for your record.");
     } catch (err) {
       console.error("Vote failed:", err);
       const msg = err.reason || err.message || "Vote transaction failed";
@@ -121,6 +135,9 @@ function CastVote() {
       setVoting(false);
     }
   }
+
+  const selectedCandidate = candidates.find((c) => c.id === selectedId);
+  const selectedIsDisqualified = selectedCandidate?.isDisqualified === true;
 
   if (success) {
     return (
@@ -190,7 +207,6 @@ function CastVote() {
         </div>
       )}
 
-      {/* Show this if wallet is NOT registered */}
       {account && isAuthorized === false && (
         <div className="max-w-md mx-auto mt-16 text-center">
           <div className="bg-white border-2 border-red-200 rounded-lg p-8">
@@ -213,52 +229,174 @@ function CastVote() {
         <>
           {/* Candidate Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {candidates.map((candidate) => (
-              <button
-                key={candidate.id}
-                onClick={() => !hasVoted && setSelectedId(candidate.id)}
-                disabled={hasVoted}
-                className={`text-left p-5 rounded-xl border-2 transition-all duration-200 ${
-                  selectedId === candidate.id
-                    ? "border-gov-gold bg-gov-gold/5 shadow-lg shadow-gov-gold/10"
-                    : "border-gov-border/50 bg-white hover:border-gov-blue/50 hover:shadow-md"
-                } ${hasVoted ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
-              >
-                <div className="flex items-start gap-4">
-                  <img
-                    src={candidate.photoUrl}
-                    alt={candidate.name}
-                    className="w-14 h-14 rounded-full bg-gov-light border-2 border-white shadow"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-heading font-bold text-gov-navy text-lg">
-                      {candidate.name}
-                    </h3>
-                    <p className="text-sm text-gov-blue font-medium">
-                      {candidate.party}
-                    </p>
-                    <p className="text-xs text-gov-text/60 mt-1 line-clamp-2">
-                      {candidate.description}
-                    </p>
-                    {candidate.constituency && (
-                      <p className="text-xs text-gov-text/40 mt-1">
-                        📍 {candidate.constituency}
-                      </p>
-                    )}
-                  </div>
-                  {selectedId === candidate.id && (
-                    <CheckCircle2 className="w-6 h-6 text-gov-gold shrink-0" />
+            {candidates.map((candidate) => {
+              const isDisqualified = candidate.isDisqualified === true;
+              const isSelected = selectedId === candidate.id;
+
+              return (
+                <div
+                  key={candidate.id}
+                  onClick={() => {
+                    if (isDisqualified || hasVoted) return;
+                    setSelectedId(candidate.id);
+                  }}
+                  style={{
+                    position: "relative",
+                    cursor: isDisqualified ? "not-allowed" : hasVoted ? "not-allowed" : "pointer",
+                    userSelect: "none",
+                  }}
+                  className={`text-left p-5 rounded-xl border-2 transition-all duration-200 ${
+                    isDisqualified
+                      ? "border-red-200 bg-red-50/60 opacity-60"
+                      : isSelected
+                      ? "border-gov-gold bg-gov-gold/5 shadow-lg shadow-gov-gold/10"
+                      : "border-gov-border/50 bg-white hover:border-gov-blue/50 hover:shadow-md"
+                  } ${hasVoted && !isDisqualified ? "opacity-60" : ""}`}
+                >
+                  {/* Diagonal strikethrough overlay for disqualified */}
+                  {isDisqualified && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        borderRadius: "inherit",
+                        pointerEvents: "none",
+                        background:
+                          "repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(220,38,38,0.06) 8px, rgba(220,38,38,0.06) 16px)",
+                        zIndex: 1,
+                      }}
+                    />
                   )}
+
+                  {/* Block all pointer events inside for disqualified */}
+                  <div style={{ pointerEvents: isDisqualified ? "none" : "auto" }}>
+                    <div className="flex items-start gap-4">
+                      {/* Avatar + Disqualified tooltip */}
+                      <div style={{ position: "relative", flexShrink: 0 }} className="group">
+                        <img
+                          src={candidate.photoUrl}
+                          alt={candidate.name}
+                          className="w-14 h-14 rounded-full bg-gov-light border-2 border-white shadow"
+                          style={isDisqualified ? { filter: "grayscale(80%)" } : {}}
+                        />
+
+                        {/* Disqualified badge icon on avatar */}
+                        {isDisqualified && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              bottom: -2,
+                              right: -2,
+                              background: "#dc2626",
+                              borderRadius: "50%",
+                              width: 20,
+                              height: 20,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              border: "2px solid #fff",
+                              zIndex: 2,
+                            }}
+                          >
+                            <Ban style={{ width: 11, height: 11, color: "#fff" }} />
+                          </div>
+                        )}
+
+                        {/* Hover tooltip "Disqualified" near profile pic */}
+                        {isDisqualified && (
+                          <div
+                            className="candidate-disq-tooltip"
+                            style={{
+                              position: "absolute",
+                              top: "50%",
+                              left: "calc(100% + 8px)",
+                              transform: "translateY(-50%)",
+                              background: "#1a1a1a",
+                              color: "#fff",
+                              padding: "5px 10px",
+                              borderRadius: "6px",
+                              fontSize: "11px",
+                              fontWeight: 700,
+                              whiteSpace: "nowrap",
+                              pointerEvents: "none",
+                              zIndex: 50,
+                              opacity: 0,
+                              transition: "opacity 0.18s ease",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+                              letterSpacing: "0.5px",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            🚫 Disqualified
+                            {/* Arrow */}
+                            <span
+                              style={{
+                                position: "absolute",
+                                right: "100%",
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                borderWidth: "5px",
+                                borderStyle: "solid",
+                                borderColor: "transparent #1a1a1a transparent transparent",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-heading font-bold text-gov-navy text-lg">
+                            {candidate.name}
+                          </h3>
+                          {isDisqualified && (
+                            <span
+                              style={{
+                                background: "#fee2e2",
+                                color: "#991b1b",
+                                fontSize: "10px",
+                                fontWeight: 700,
+                                padding: "2px 7px",
+                                borderRadius: "4px",
+                                letterSpacing: "0.5px",
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              Disqualified
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gov-blue font-medium">{candidate.party}</p>
+                        <p className="text-xs text-gov-text/60 mt-1 line-clamp-2">
+                          {candidate.description}
+                        </p>
+                        {candidate.constituency && (
+                          <p className="text-xs text-gov-text/40 mt-1">
+                            📍 {candidate.constituency}
+                          </p>
+                        )}
+                        {isDisqualified && (
+                          <p className="text-xs text-red-500 mt-1 font-medium">
+                            ⛔ Voting disabled — candidate removed from election
+                          </p>
+                        )}
+                      </div>
+
+                      {isSelected && !isDisqualified && (
+                        <CheckCircle2 className="w-6 h-6 text-gov-gold shrink-0" />
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
 
           {/* Submit Vote */}
           <div className="flex justify-center pt-4">
             <button
               onClick={handleVote}
-              disabled={!selectedId || voting || !account || hasVoted}
+              disabled={!selectedId || voting || !account || hasVoted || selectedIsDisqualified}
               className="flex items-center gap-2 px-8 py-3 bg-gov-navy hover:bg-gov-blue text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-gov-navy/25 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {voting ? (
@@ -266,11 +404,22 @@ function CastVote() {
               ) : (
                 <Vote className="w-5 h-5" />
               )}
-              {voting ? "Submitting Vote..." : "Submit Vote to Blockchain"}
+              {voting
+                ? "Submitting Vote..."
+                : selectedIsDisqualified
+                ? "Cannot Vote — Candidate Disqualified"
+                : "Submit Vote to Blockchain"}
             </button>
           </div>
         </>
       )}
+
+      {/* Tooltip hover CSS */}
+      <style>{`
+        .group:hover .candidate-disq-tooltip {
+          opacity: 1 !important;
+        }
+      `}</style>
     </div>
   );
 }

@@ -50,11 +50,27 @@ function Dashboard() {
 
   useEffect(() => {
     if (!stats?.endTime) return;
+    
+    if (!stats.isActive && stats.electionStopTime) {
+      const diff = stats.endTime - stats.electionStopTime;
+      if (diff <= 0) {
+        setTimeLeft("00:00:00");
+      } else {
+        const h = Math.floor(diff / 3600);
+        const m = Math.floor((diff % 3600) / 60);
+        const s = diff % 60;
+        setTimeLeft(
+          `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+        );
+      }
+      return; // No interval needed
+    }
+
     const timer = setInterval(() => {
       const now = Math.floor(Date.now() / 1000);
       const diff = stats.endTime - now;
       if (diff <= 0) {
-        setTimeLeft("Election Ended");
+        setTimeLeft("00:00:00");
         clearInterval(timer);
         return;
       }
@@ -66,7 +82,7 @@ function Dashboard() {
       );
     }, 1000);
     return () => clearInterval(timer);
-  }, [stats?.endTime]);
+  }, [stats?.endTime, stats?.isActive, stats?.electionStopTime]);
 
   const totalVotes = candidates.reduce((sum, c) => sum + c.voteCount, 0);
   const maxVotes = Math.max(...candidates.map((c) => c.voteCount), 1);

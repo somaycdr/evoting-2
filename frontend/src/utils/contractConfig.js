@@ -253,6 +253,19 @@ export const CONTRACT_ABI = [
   },
   {
     "inputs": [],
+    "name": "electionStopTime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "endElection",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -336,6 +349,11 @@ export const CONTRACT_ABI = [
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       },
       {
         "internalType": "uint256",

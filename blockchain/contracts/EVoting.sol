@@ -15,6 +15,7 @@ contract EVoting {
     bool public electionActive;
     string public electionName;
     uint256 public electionEndTime;
+    uint256 public electionStopTime;
     uint256 private candidateCount;
 
     struct Candidate {
@@ -69,7 +70,6 @@ contract EVoting {
     }
 
     function addCandidate(string memory _name, string memory _party, string memory _description) external onlyAdmin {
-        require(!electionActive, "EVoting: Cannot add candidates after election starts");
         require(bytes(_name).length > 0, "EVoting: Candidate name cannot be empty");
         candidateCount++;
         candidates[candidateCount] = Candidate({ id: candidateCount, name: _name, party: _party, description: _description, voteCount: 0, exists: true });
@@ -89,7 +89,7 @@ contract EVoting {
     function endElection() external onlyAdmin {
         require(electionActive, "EVoting: Election is not active");
         electionActive = false;
-        electionEndTime = block.timestamp;
+        electionStopTime = block.timestamp;
         emit ElectionEnded(block.timestamp);
     }
 
@@ -126,9 +126,9 @@ contract EVoting {
         return (valid, r.voter, r.candidateId, r.timestamp, r.blockNumber);
     }
 
-    function getElectionStats() external view returns (string memory, bool, uint256, uint256, uint256) {
+    function getElectionStats() external view returns (string memory, bool, uint256, uint256, uint256, uint256) {
         uint256 total = 0;
         for (uint256 i = 0; i < candidateIds.length; i++) { total += candidates[candidateIds[i]].voteCount; }
-        return (electionName, electionActive, electionEndTime, candidateCount, total);
+        return (electionName, electionActive, electionEndTime, candidateCount, total, electionStopTime);
     }
 }
